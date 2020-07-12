@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using File = TagLib.File;
 
 namespace musicCollectionConverter
@@ -27,11 +23,20 @@ namespace musicCollectionConverter
                     Console.WriteLine("I'm sorry, but I don't support {0}", Environment.OSVersion.Platform);
                     return;
             }
+
+            if (args.Length != 2)
+            {
+                Console.WriteLine("usage: musicCollectionConverter.exe indir outdir");
+                return;
+            }
+
+            pathSeperator = Path.DirectorySeparatorChar.ToString();
             EnsureDirectoryExists(new DirectoryInfo(args[1]));
             HandleDirectory(new DirectoryInfo(args[0]), new DirectoryInfo(args[1]));
         }
 
         private static string encoder = "oggenc.exe";
+        private static string pathSeperator;
 
         static void HandleDirectory(DirectoryInfo indir,DirectoryInfo outdir)
         {
@@ -56,15 +61,15 @@ namespace musicCollectionConverter
 
                 string ogAlbum = f.Tag.Album;
                 string ogTitle = f.Tag.Title;
-                string album = ogAlbum.Replace(':', '\uFF1A').Replace('\"', '\uFF02').Replace('/', '\uFF0F').Replace('?', '\uFF1F').Replace('|','\uFF5C').Trim();
-                string title = ogTitle.Replace(':', '\uFF1A').Replace('\"', '\uFF02').Replace('/', '\uFF0F').Replace('?', '\uFF1F').Replace('|','\uFF5C').Trim();
+                string album = ogAlbum.Replace(':', '\uFF1A').Replace('\"', '\uFF02').Replace('/', '\uFF0F').Replace('?', '\uFF1F').Replace('|','\uFF5C').Replace('/', '\uFF0F').Trim();
+                string title = ogTitle.Replace(':', '\uFF1A').Replace('\"', '\uFF02').Replace('/', '\uFF0F').Replace('?', '\uFF1F').Replace('|','\uFF5C').Replace('/', '\uFF0F').Trim();
                 uint disc = f.Tag.Disc;
                 uint trackNo = f.Tag.Track;
 
                 if (album.StartsWith(".")) 
                     album = album.Replace('.', '．');
 
-                DirectoryInfo albumOutDir = new DirectoryInfo(Path.Combine(outdir.FullName, album + "\\"));
+                DirectoryInfo albumOutDir = new DirectoryInfo(Path.Combine(outdir.FullName, album + pathSeperator));
                 EnsureDirectoryExists(albumOutDir);
                 FileInfo coverOutFileInfo = new FileInfo(Path.Combine(albumOutDir.FullName, "folder.jpg"));
 
@@ -85,11 +90,11 @@ namespace musicCollectionConverter
                 f.Dispose();
 
                 string outFileName = string.Format("{0}{1}{2:00} {3}.ogg", albumOutDir,disc != 0 ? disc.ToString() + "." : "", trackNo, title);
+                outFileName = outFileName.Replace('\"', '\uFF02');
                 outFileName = outFileName.Replace('?',  '\uFF1F');
                 outFileName = outFileName.Replace('<',  '\uFF1C');
                 outFileName = outFileName.Replace('>',  '\uFF1E');
                 outFileName = outFileName.Replace('*',  '\uFF0A');
-                outFileName = outFileName.Replace('\"', '\uFF02');
 
                 FileInfo outFileInfo = new FileInfo(outFileName);
                 if (!outFileInfo.Exists)
