@@ -15,11 +15,23 @@ namespace musicCollectionConverter
     {
         static void Main(string[] args)
         {
+            switch (Environment.OSVersion.Platform)
+            {
+                case PlatformID.Win32NT:
+                    encoder = "oggenc2.exe";
+                    break;
+                case PlatformID.Unix:
+                    encoder = "oggenc";
+                    break;
+                default:
+                    Console.WriteLine("I'm sorry, but I don't support {0}", Environment.OSVersion.Platform);
+                    return;
+            }
             EnsureDirectoryExists(new DirectoryInfo(args[1]));
             HandleDirectory(new DirectoryInfo(args[0]), new DirectoryInfo(args[1]));
         }
 
-        const string encoder = "C:\\FT\\oggenc2.exe";
+        private static string encoder = "oggenc.exe";
 
         static void HandleDirectory(DirectoryInfo indir,DirectoryInfo outdir)
         {
